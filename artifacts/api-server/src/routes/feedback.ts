@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db, feedbackWindowsTable, feedbackTable, classesTable, usersTable, staffTable } from "@workspace/db";
 import { eq, count, avg, and, lte, gte } from "drizzle-orm";
 import { authenticate, requireRole } from "../middlewares/authenticate.js";
+import { getSingleValue } from "../lib/request.js";
 
 const router = Router();
 
@@ -88,9 +89,15 @@ router.get("/windows", authenticate, async (req, res) => {
 
 router.post("/:windowId/submit", authenticate, requireRole("STUDENT"), async (req, res) => {
   try {
+    const windowId = getSingleValue(req.params.windowId);
+    if (!windowId) {
+      res.status(400).json({ error: "Bad Request", message: "Missing window id" });
+      return;
+    }
+
     const { rating, comment } = req.body;
     const studentId = req.user!.studentId;
-    const [window] = await db.select().from(feedbackWindowsTable).where(eq(feedbackWindowsTable.id, req.params.windowId));
+    const [window] = await db.select().from(feedbackWindowsTable).where(eq(feedbackWindowsTable.id, windowId));
 
     if (!window || !window.isActive || new Date() > window.closesAt) {
       res.status(400).json({ error: "Bad Request", message: "Feedback window is closed" });
@@ -119,7 +126,13 @@ router.post("/:windowId/submit", authenticate, requireRole("STUDENT"), async (re
 
 router.get("/:windowId", authenticate, requireRole("STAFF", "HOD"), async (req, res) => {
   try {
-    const feedbacks = await db.select().from(feedbackTable).where(eq(feedbackTable.windowId, req.params.windowId));
+    const windowId = getSingleValue(req.params.windowId);
+    if (!windowId) {
+      res.status(400).json({ error: "Bad Request", message: "Missing window id" });
+      return;
+    }
+
+    const feedbacks = await db.select().from(feedbackTable).where(eq(feedbackTable.windowId, windowId));
 
     const total = feedbacks.length;
     const avgRating = total > 0 ? feedbacks.reduce((sum, f) => sum + f.rating, 0) / total : 0;
@@ -137,7 +150,7 @@ router.get("/:windowId", authenticate, requireRole("STAFF", "HOD"), async (req, 
     }));
 
     res.json({
-      windowId: req.params.windowId,
+      windowId,
       totalFeedback: total,
       averageRating: Math.round(avgRating * 100) / 100,
       averageSentiment: Math.round(avgSentiment * 100) / 100,

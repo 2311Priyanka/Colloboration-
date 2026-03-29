@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db, classesTable, allocationsTable, usersTable, staffTable, subjectsTable, studentsTable } from "@workspace/db";
 import { eq, count } from "drizzle-orm";
 import { authenticate, requireRole } from "../middlewares/authenticate.js";
+import { getSingleValue } from "../lib/request.js";
 
 const router = Router();
 
@@ -54,7 +55,13 @@ router.post("/", authenticate, requireRole("HOD"), async (req, res) => {
 
 router.get("/:id", authenticate, async (req, res) => {
   try {
-    const [cls] = await db.select().from(classesTable).where(eq(classesTable.id, req.params.id));
+    const classId = getSingleValue(req.params.id);
+    if (!classId) {
+      res.status(400).json({ error: "Bad Request", message: "Missing class id" });
+      return;
+    }
+
+    const [cls] = await db.select().from(classesTable).where(eq(classesTable.id, classId));
     if (!cls) {
       res.status(404).json({ error: "Not Found" });
       return;
@@ -87,9 +94,15 @@ router.get("/:id", authenticate, async (req, res) => {
 
 router.post("/:id/allocations", authenticate, requireRole("HOD"), async (req, res) => {
   try {
+    const classId = getSingleValue(req.params.id);
+    if (!classId) {
+      res.status(400).json({ error: "Bad Request", message: "Missing class id" });
+      return;
+    }
+
     const { staffId, subjectId, type } = req.body;
     const [alloc] = await db.insert(allocationsTable).values({
-      classId: req.params.id,
+      classId,
       staffId,
       subjectId,
       type,

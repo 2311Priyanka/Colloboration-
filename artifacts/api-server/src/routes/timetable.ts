@@ -5,6 +5,7 @@ import {
 } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { authenticate, requireRole } from "../middlewares/authenticate.js";
+import { getSingleValue } from "../lib/request.js";
 
 const router = Router();
 
@@ -94,13 +95,19 @@ router.get("/staff/me", authenticate, async (req, res) => {
 
 router.get("/:classId", authenticate, async (req, res) => {
   try {
-    const [cls] = await db.select().from(classesTable).where(eq(classesTable.id, req.params.classId));
+    const classId = getSingleValue(req.params.classId);
+    if (!classId) {
+      res.status(400).json({ error: "Bad Request", message: "Missing class id" });
+      return;
+    }
+
+    const [cls] = await db.select().from(classesTable).where(eq(classesTable.id, classId));
     if (!cls) {
       res.status(404).json({ error: "Not Found", message: "Class not found" });
       return;
     }
 
-    const [timetable] = await db.select().from(timetablesTable).where(eq(timetablesTable.classId, req.params.classId));
+    const [timetable] = await db.select().from(timetablesTable).where(eq(timetablesTable.classId, classId));
     if (!timetable) {
       res.json({ id: "none", classId: cls.id, className: cls.name, version: 0, slots: [] });
       return;
@@ -116,7 +123,12 @@ router.get("/:classId", authenticate, async (req, res) => {
 
 router.post("/:classId/generate", authenticate, requireRole("HOD", "STAFF"), async (req, res) => {
   try {
-    const { classId } = req.params;
+    const classId = getSingleValue(req.params.classId);
+    if (!classId) {
+      res.status(400).json({ error: "Bad Request", message: "Missing class id" });
+      return;
+    }
+
     const [cls] = await db.select().from(classesTable).where(eq(classesTable.id, classId));
     if (!cls) {
       res.status(404).json({ error: "Not Found", message: "Class not found" });

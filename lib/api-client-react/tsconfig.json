@@ -4,8 +4,9 @@
     "composite": true,
     "declarationMap": true,
     "emitDeclarationOnly": true,
-    "outDir": "dist",
+    "outDir": "../../.codex-build/api-client-react/dist",
     "rootDir": "src",
+    "tsBuildInfoFile": "../../.codex-build/api-client-react/tsconfig.tsbuildinfo",
     "lib": ["dom", "es2022"]
   },
   "include": ["src"]

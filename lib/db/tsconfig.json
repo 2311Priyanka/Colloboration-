@@ -4,8 +4,9 @@
     "composite": true,
     "declarationMap": true,
     "emitDeclarationOnly": true,
-    "outDir": "dist",
+    "outDir": "../../.codex-build/db/dist",
     "rootDir": "src",
+    "tsBuildInfoFile": "../../.codex-build/db/tsconfig.tsbuildinfo",
     "types": ["node"]
   },
   "include": ["src"]

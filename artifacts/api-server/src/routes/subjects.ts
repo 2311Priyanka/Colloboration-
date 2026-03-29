@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db, subjectsTable, staffTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { authenticate, requireRole } from "../middlewares/authenticate.js";
+import { getSingleValue } from "../lib/request.js";
 
 const router = Router();
 
@@ -42,10 +43,16 @@ router.post("/", authenticate, requireRole("STAFF", "HOD"), async (req, res) => 
 
 router.put("/:id", authenticate, requireRole("STAFF", "HOD"), async (req, res) => {
   try {
+    const subjectId = getSingleValue(req.params.id);
+    if (!subjectId) {
+      res.status(400).json({ error: "Bad Request", message: "Missing subject id" });
+      return;
+    }
+
     const { name, code, type, credits } = req.body;
     const [subject] = await db.update(subjectsTable)
       .set({ name, code, type, credits })
-      .where(eq(subjectsTable.id, req.params.id))
+      .where(eq(subjectsTable.id, subjectId))
       .returning();
     if (!subject) {
       res.status(404).json({ error: "Not Found" });
@@ -60,7 +67,13 @@ router.put("/:id", authenticate, requireRole("STAFF", "HOD"), async (req, res) =
 
 router.delete("/:id", authenticate, requireRole("STAFF", "HOD"), async (req, res) => {
   try {
-    await db.delete(subjectsTable).where(eq(subjectsTable.id, req.params.id));
+    const subjectId = getSingleValue(req.params.id);
+    if (!subjectId) {
+      res.status(400).json({ error: "Bad Request", message: "Missing subject id" });
+      return;
+    }
+
+    await db.delete(subjectsTable).where(eq(subjectsTable.id, subjectId));
     res.json({ success: true, message: "Subject deleted" });
   } catch (err) {
     req.log?.error(err);

@@ -5,6 +5,7 @@ import {
 } from "@workspace/db";
 import { eq, count, avg } from "drizzle-orm";
 import { authenticate, requireRole } from "../middlewares/authenticate.js";
+import { getSingleValue } from "../lib/request.js";
 
 const router = Router();
 
@@ -72,7 +73,13 @@ async function calculateBurnout(staffId: string) {
 
 router.get("/staff/:staffId", authenticate, async (req, res) => {
   try {
-    const analysis = await calculateBurnout(req.params.staffId);
+    const staffId = getSingleValue(req.params.staffId);
+    if (!staffId) {
+      res.status(400).json({ error: "Bad Request", message: "Missing staff id" });
+      return;
+    }
+
+    const analysis = await calculateBurnout(staffId);
     res.json(analysis);
   } catch (err) {
     req.log?.error(err);

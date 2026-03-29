@@ -4,8 +4,9 @@
     "composite": true,
     "declarationMap": true,
     "emitDeclarationOnly": true,
-    "outDir": "dist",
-    "rootDir": "src"
+    "outDir": "../../.codex-build/api-zod/dist",
+    "rootDir": "src",
+    "tsBuildInfoFile": "../../.codex-build/api-zod/tsconfig.tsbuildinfo"
   },
   "include": ["src"]
 }

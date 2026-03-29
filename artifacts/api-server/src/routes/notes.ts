@@ -2,11 +2,18 @@ import { Router } from "express";
 import { db, notesTable, usersTable, staffTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { authenticate, requireRole } from "../middlewares/authenticate.js";
+import { getSingleValue } from "../lib/request.js";
 
 const router = Router();
 
 router.get("/:classId", authenticate, async (req, res) => {
   try {
+    const classId = getSingleValue(req.params.classId);
+    if (!classId) {
+      res.status(400).json({ error: "Bad Request", message: "Missing class id" });
+      return;
+    }
+
     const notes = await db
       .select({
         id: notesTable.id,
@@ -20,7 +27,7 @@ router.get("/:classId", authenticate, async (req, res) => {
       .from(notesTable)
       .leftJoin(staffTable, eq(staffTable.id, notesTable.staffId))
       .leftJoin(usersTable, eq(usersTable.id, staffTable.userId))
-      .where(eq(notesTable.classId, req.params.classId))
+      .where(eq(notesTable.classId, classId))
       .orderBy(notesTable.createdAt);
 
     res.json(notes);
@@ -32,6 +39,12 @@ router.get("/:classId", authenticate, async (req, res) => {
 
 router.post("/:classId", authenticate, requireRole("STAFF", "HOD"), async (req, res) => {
   try {
+    const classId = getSingleValue(req.params.classId);
+    if (!classId) {
+      res.status(400).json({ error: "Bad Request", message: "Missing class id" });
+      return;
+    }
+
     const { content } = req.body;
     const staffId = req.user!.staffId;
     if (!staffId) {
@@ -40,7 +53,7 @@ router.post("/:classId", authenticate, requireRole("STAFF", "HOD"), async (req, 
     }
 
     const [note] = await db.insert(notesTable).values({
-      classId: req.params.classId,
+      classId,
       staffId,
       content,
     }).returning();
@@ -59,10 +72,16 @@ router.post("/:classId", authenticate, requireRole("STAFF", "HOD"), async (req, 
 
 router.put("/:classId/:noteId", authenticate, requireRole("STAFF", "HOD"), async (req, res) => {
   try {
+    const noteId = getSingleValue(req.params.noteId);
+    if (!noteId) {
+      res.status(400).json({ error: "Bad Request", message: "Missing note id" });
+      return;
+    }
+
     const { content } = req.body;
     const [note] = await db.update(notesTable)
       .set({ content, updatedAt: new Date() })
-      .where(eq(notesTable.id, req.params.noteId))
+      .where(eq(notesTable.id, noteId))
       .returning();
 
     const staffUser = await db.select({ name: usersTable.name })
@@ -79,7 +98,13 @@ router.put("/:classId/:noteId", authenticate, requireRole("STAFF", "HOD"), async
 
 router.delete("/:classId/:noteId", authenticate, requireRole("STAFF", "HOD"), async (req, res) => {
   try {
-    await db.delete(notesTable).where(eq(notesTable.id, req.params.noteId));
+    const noteId = getSingleValue(req.params.noteId);
+    if (!noteId) {
+      res.status(400).json({ error: "Bad Request", message: "Missing note id" });
+      return;
+    }
+
+    await db.delete(notesTable).where(eq(notesTable.id, noteId));
     res.json({ success: true, message: "Note deleted" });
   } catch (err) {
     req.log?.error(err);
