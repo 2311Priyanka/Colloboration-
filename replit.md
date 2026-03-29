@@ -1,4 +1,5 @@
 # Smart Classroom Management System
+<!-- Last updated: year/section fields added to students + staff tables; staff students filter page at /staff/students -->
 
 ## Overview
 

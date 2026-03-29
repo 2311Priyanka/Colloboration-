@@ -5,17 +5,16 @@
  * Smart Classroom Management System API
  * OpenAPI spec version: 0.1.0
  */
-import type { UserRole } from "./userRole";
 
-export interface User {
-  id: string;
-  email: string;
+export interface StudentRecord {
+  studentId: string;
+  userId: string;
   name: string;
-  role: UserRole;
+  email: string;
   department: string;
   phone?: string;
-  staffId?: string;
-  studentId?: string;
   year?: number;
   section?: string;
+  classId?: string;
+  className?: string;
 }

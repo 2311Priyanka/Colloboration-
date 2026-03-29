@@ -16,6 +16,7 @@ import StaffDashboard from "@/pages/staff/dashboard";
 import StaffSubjects from "@/pages/staff/subjects";
 import StaffQR from "@/pages/staff/qr";
 import StaffNotes from "@/pages/staff/notes";
+import StaffStudents from "@/pages/staff/students";
 
 // HOD
 import HodDashboard from "@/pages/hod/dashboard";
@@ -75,6 +76,7 @@ function Router() {
             <Route path="/staff/qr"><ProtectedRoute component={StaffQR} allowedRole={UserRole.STAFF} /></Route>
             <Route path="/staff/notes"><ProtectedRoute component={StaffNotes} allowedRole={UserRole.STAFF} /></Route>
             <Route path="/staff/availability"><ProtectedRoute component={() => <div>Availability Page Coming Soon</div>} allowedRole={UserRole.STAFF} /></Route>
+            <Route path="/staff/students"><ProtectedRoute component={StaffStudents} allowedRole={UserRole.STAFF} /></Route>
           </Switch>
         </AppLayout>
       </Route>

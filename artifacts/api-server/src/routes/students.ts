@@ -1,9 +1,64 @@
 import { Router } from "express";
 import { db, studentsTable, classesTable, allocationsTable, usersTable, staffTable, subjectsTable } from "@workspace/db";
-import { eq, count } from "drizzle-orm";
+import { eq, count, and } from "drizzle-orm";
 import { authenticate, requireRole } from "../middlewares/authenticate.js";
 
 const router = Router();
+
+router.get("/list", authenticate, requireRole("STAFF", "HOD"), async (req, res) => {
+  try {
+    const yearParam = req.query.year ? Number(req.query.year) : undefined;
+    const sectionParam = req.query.section as string | undefined;
+
+    const conditions = [];
+    if (yearParam) conditions.push(eq(studentsTable.year, yearParam));
+    if (sectionParam) conditions.push(eq(studentsTable.section, sectionParam));
+
+    const rows = await db
+      .select({
+        studentId: studentsTable.id,
+        userId: usersTable.id,
+        name: usersTable.name,
+        email: usersTable.email,
+        department: usersTable.department,
+        phone: usersTable.phone,
+        year: studentsTable.year,
+        section: studentsTable.section,
+        classId: studentsTable.classId,
+        className: classesTable.name,
+      })
+      .from(studentsTable)
+      .leftJoin(usersTable, eq(usersTable.id, studentsTable.userId))
+      .leftJoin(classesTable, eq(classesTable.id, studentsTable.classId))
+      .where(conditions.length > 0 ? and(...conditions) : undefined);
+
+    res.json(rows);
+  } catch (err) {
+    req.log?.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.patch("/update-profile", authenticate, requireRole("STUDENT"), async (req, res) => {
+  try {
+    const studentId = req.user!.studentId;
+    if (!studentId) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { year, section } = req.body;
+    await db.update(studentsTable)
+      .set({
+        ...(year !== undefined ? { year: Number(year) } : {}),
+        ...(section !== undefined ? { section } : {}),
+      })
+      .where(eq(studentsTable.id, studentId));
+    res.json({ success: true });
+  } catch (err) {
+    req.log?.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 router.post("/join-class", authenticate, requireRole("STUDENT"), async (req, res) => {
   try {

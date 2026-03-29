@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -8,6 +8,8 @@ export const studentsTable = pgTable("students", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   userId: text("user_id").notNull().unique().references(() => usersTable.id, { onDelete: "cascade" }),
   classId: text("class_id").references(() => classesTable.id, { onDelete: "set null" }),
+  year: integer("year"),
+  section: text("section"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

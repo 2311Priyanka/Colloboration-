@@ -61,7 +61,7 @@ router.post("/login", async (req, res) => {
 
 router.post("/register", async (req, res) => {
   try {
-    const { email, password, name, role, department, phone, designation } = req.body;
+    const { email, password, name, role, department, phone, designation, year, section } = req.body;
     if (!email || !password || !name || !role || !department) {
       res.status(400).json({ error: "Bad Request", message: "Missing required fields" });
       return;
@@ -89,11 +89,15 @@ router.post("/register", async (req, res) => {
       const [staff] = await db.insert(staffTable).values({
         userId: user.id,
         designation: designation || "Lecturer",
+        year: year ? Number(year) : null,
+        section: section || null,
       }).returning();
       staffId = staff.id;
     } else if (role === "STUDENT") {
       const [student] = await db.insert(studentsTable).values({
         userId: user.id,
+        year: year ? Number(year) : null,
+        section: section || null,
       }).returning();
       studentId = student.id;
     }
@@ -110,6 +114,8 @@ router.post("/register", async (req, res) => {
         phone: user.phone,
         staffId,
         studentId,
+        year: year ? Number(year) : undefined,
+        section: section || undefined,
       },
     });
   } catch (err) {

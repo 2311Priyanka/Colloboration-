@@ -9,6 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
+const YEARS = [1, 2, 3, 4];
+const SECTIONS = ["A", "B", "C", "D", "E"];
+
 export default function Register() {
   const { login } = useAuth();
   const { toast } = useToast();
@@ -18,7 +21,10 @@ export default function Register() {
     email: "",
     password: "",
     department: "",
-    role: "STUDENT" as RegisterRequestRole
+    role: "STUDENT" as RegisterRequestRole,
+    designation: "",
+    year: "" as string,
+    section: "" as string,
   });
 
   const registerMutation = useRegister({
@@ -39,12 +45,25 @@ export default function Register() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    registerMutation.mutate({ data: formData });
+    const payload: any = {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      department: formData.department,
+      role: formData.role,
+    };
+    if (formData.designation) payload.designation = formData.designation;
+    if (formData.year) payload.year = Number(formData.year);
+    if (formData.section) payload.section = formData.section;
+    registerMutation.mutate({ data: payload });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData(prev => ({ ...prev, [e.target.id]: e.target.value }));
   };
+
+  const isStudent = formData.role === "STUDENT";
+  const isStaff = formData.role === "STAFF" || formData.role === "HOD";
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-background py-12">
@@ -97,6 +116,44 @@ export default function Register() {
                   <option value="STUDENT">Student</option>
                   <option value="STAFF">Staff</option>
                   <option value="HOD">HOD</option>
+                </select>
+              </div>
+            </div>
+
+            {isStaff && (
+              <div className="space-y-2">
+                <Label htmlFor="designation">Designation</Label>
+                <Input id="designation" placeholder="e.g. Assistant Professor" value={formData.designation} onChange={handleChange} />
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="year">{isStudent ? "Year of Study" : "Year Group"}</Label>
+                <select 
+                  id="year" 
+                  value={formData.year} 
+                  onChange={handleChange}
+                  className="flex h-11 w-full rounded-xl border-2 border-border bg-background px-4 py-2 text-sm text-foreground focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none transition-all"
+                >
+                  <option value="">Select year</option>
+                  {YEARS.map(y => (
+                    <option key={y} value={y}>Year {y}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="section">{isStudent ? "Section" : "Section Handled"}</Label>
+                <select 
+                  id="section" 
+                  value={formData.section} 
+                  onChange={handleChange}
+                  className="flex h-11 w-full rounded-xl border-2 border-border bg-background px-4 py-2 text-sm text-foreground focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none transition-all"
+                >
+                  <option value="">Select section</option>
+                  {SECTIONS.map(s => (
+                    <option key={s} value={s}>Section {s}</option>
+                  ))}
                 </select>
               </div>
             </div>

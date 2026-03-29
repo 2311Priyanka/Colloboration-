@@ -15,4 +15,12 @@ export interface RegisterRequest {
   department: string;
   phone?: string;
   designation?: string;
+  /**
+   * Year of study (students) or year group handled (staff)
+   * @minimum 1
+   * @maximum 4
+   */
+  year?: number;
+  /** Section (A, B, C, D, E) */
+  section?: string;
 }

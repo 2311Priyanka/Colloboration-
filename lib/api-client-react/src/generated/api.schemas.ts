@@ -41,6 +41,14 @@ export interface RegisterRequest {
   department: string;
   phone?: string;
   designation?: string;
+  /**
+   * Year of study (students) or year group handled (staff)
+   * @minimum 1
+   * @maximum 4
+   */
+  year?: number;
+  /** Section (A, B, C, D, E) */
+  section?: string;
 }
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
@@ -60,6 +68,8 @@ export interface User {
   phone?: string;
   staffId?: string;
   studentId?: string;
+  year?: number;
+  section?: string;
 }
 
 export interface AuthResponse {
@@ -480,3 +490,30 @@ export interface ScheduleConfig {
 export interface JoinClassRequest {
   classCode: string;
 }
+
+export interface StudentRecord {
+  studentId: string;
+  userId: string;
+  name: string;
+  email: string;
+  department: string;
+  phone?: string;
+  year?: number;
+  section?: string;
+  classId?: string;
+  className?: string;
+}
+
+export interface UpdateStudentProfileRequest {
+  /**
+   * @minimum 1
+   * @maximum 4
+   */
+  year?: number;
+  section?: string;
+}
+
+export type ListStudentsParams = {
+  year?: number;
+  section?: string;
+};

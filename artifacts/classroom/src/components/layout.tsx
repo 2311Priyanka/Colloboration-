@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { 
   LayoutDashboard, BookOpen, QrCode, ClipboardList, CalendarOff, 
   Users, CalendarDays, MessageSquare, BarChart3, ScanLine, 
-  Bell, LogOut, Menu, X
+  Bell, LogOut, Menu, X, GraduationCap
 } from "lucide-react";
 import { UserRole } from "@workspace/api-client-react";
 import { useState } from "react";
@@ -25,6 +25,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           { href: "/staff/subjects", label: "Subjects", icon: BookOpen },
           { href: "/staff/qr", label: "QR Generator", icon: QrCode },
           { href: "/staff/notes", label: "Class Notes", icon: ClipboardList },
+          { href: "/staff/students", label: "Students", icon: GraduationCap },
           { href: "/staff/availability", label: "Availability", icon: CalendarOff },
         ];
       case UserRole.HOD:

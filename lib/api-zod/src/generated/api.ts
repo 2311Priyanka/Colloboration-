@@ -33,12 +33,16 @@ export const LoginResponse = zod.object({
     phone: zod.string().optional(),
     staffId: zod.string().optional(),
     studentId: zod.string().optional(),
+    year: zod.number().optional(),
+    section: zod.string().optional(),
   }),
 });
 
 /**
  * @summary Register a new user
  */
+export const registerBodyYearMax = 4;
+
 export const RegisterBody = zod.object({
   email: zod.string().email(),
   password: zod.string(),
@@ -47,6 +51,13 @@ export const RegisterBody = zod.object({
   department: zod.string(),
   phone: zod.string().optional(),
   designation: zod.string().optional(),
+  year: zod
+    .number()
+    .min(1)
+    .max(registerBodyYearMax)
+    .optional()
+    .describe("Year of study (students) or year group handled (staff)"),
+  section: zod.string().optional().describe("Section (A, B, C, D, E)"),
 });
 
 /**
@@ -61,6 +72,8 @@ export const GetMeResponse = zod.object({
   phone: zod.string().optional(),
   staffId: zod.string().optional(),
   studentId: zod.string().optional(),
+  year: zod.number().optional(),
+  section: zod.string().optional(),
 });
 
 /**
@@ -713,6 +726,43 @@ export const SaveScheduleConfigResponse = zod.object({
   lunchBreakEnd: zod.string(),
   maxContinuousHours: zod.number(),
   maxWeeklyHours: zod.number().optional(),
+});
+
+/**
+ * @summary List students filtered by year and section (Staff/HOD)
+ */
+export const ListStudentsQueryParams = zod.object({
+  year: zod.coerce.number().optional(),
+  section: zod.coerce.string().optional(),
+});
+
+export const ListStudentsResponseItem = zod.object({
+  studentId: zod.string(),
+  userId: zod.string(),
+  name: zod.string(),
+  email: zod.string(),
+  department: zod.string(),
+  phone: zod.string().optional(),
+  year: zod.number().optional(),
+  section: zod.string().optional(),
+  classId: zod.string().optional(),
+  className: zod.string().optional(),
+});
+export const ListStudentsResponse = zod.array(ListStudentsResponseItem);
+
+/**
+ * @summary Update student year and section
+ */
+export const updateStudentProfileBodyYearMax = 4;
+
+export const UpdateStudentProfileBody = zod.object({
+  year: zod.number().min(1).max(updateStudentProfileBodyYearMax).optional(),
+  section: zod.string().optional(),
+});
+
+export const UpdateStudentProfileResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string().optional(),
 });
 
 /**

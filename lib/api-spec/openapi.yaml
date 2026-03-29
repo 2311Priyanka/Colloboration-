@@ -813,6 +813,53 @@ paths:
               schema:
                 $ref: "#/components/schemas/ScheduleConfig"
 
+  /students/list:
+    get:
+      operationId: listStudents
+      tags: [students]
+      summary: List students filtered by year and section (Staff/HOD)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: year
+          in: query
+          schema:
+            type: integer
+        - name: section
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Filtered student list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StudentRecord"
+
+  /students/update-profile:
+    patch:
+      operationId: updateStudentProfile
+      tags: [students]
+      summary: Update student year and section
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStudentProfileRequest"
+      responses:
+        "200":
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
   /students/join-class:
     post:
       operationId: studentJoinClass
@@ -916,6 +963,14 @@ components:
           type: string
         designation:
           type: string
+        year:
+          type: integer
+          description: Year of study (students) or year group handled (staff)
+          minimum: 1
+          maximum: 4
+        section:
+          type: string
+          description: Section (A, B, C, D, E)
       required:
         - email
         - password
@@ -953,6 +1008,10 @@ components:
         staffId:
           type: string
         studentId:
+          type: string
+        year:
+          type: integer
+        section:
           type: string
       required:
         - id
@@ -1721,3 +1780,43 @@ components:
           type: string
       required:
         - classCode
+
+    StudentRecord:
+      type: object
+      properties:
+        studentId:
+          type: string
+        userId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        department:
+          type: string
+        phone:
+          type: string
+        year:
+          type: integer
+        section:
+          type: string
+        classId:
+          type: string
+        className:
+          type: string
+      required:
+        - studentId
+        - userId
+        - name
+        - email
+        - department
+
+    UpdateStudentProfileRequest:
+      type: object
+      properties:
+        year:
+          type: integer
+          minimum: 1
+          maximum: 4
+        section:
+          type: string
