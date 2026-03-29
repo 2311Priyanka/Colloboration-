@@ -1,8 +1,8 @@
-# Workspace
+# Smart Classroom Management System
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+A production-ready full-stack Smart Classroom Management System for colleges, supporting Staff, HOD (Head of Department), and Student roles.
 
 ## Stack
 
@@ -10,87 +10,76 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Node.js version**: 24
 - **Package manager**: pnpm
 - **TypeScript version**: 5.9
+- **Frontend**: React + Vite + Tailwind CSS + Shadcn/UI + Recharts + QRCode.react
 - **API framework**: Express 5
 - **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
+- **Authentication**: JWT (jsonwebtoken + bcryptjs)
+- **Validation**: Zod (zod/v4), drizzle-zod
 - **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+- **Build**: esbuild (ESM bundle)
 
 ## Structure
 
 ```text
 artifacts-monorepo/
-├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
-├── lib/                    # Shared libraries
+├── artifacts/
+│   ├── api-server/         # Express API server
+│   └── classroom/          # React + Vite frontend
+├── lib/
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks
-│   ├── api-zod/            # Generated Zod schemas from OpenAPI
+│   ├── api-zod/            # Generated Zod schemas
 │   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+├── scripts/
+│   └── src/seed.ts         # Demo data seeder
+└── ...
 ```
 
-## TypeScript & Composite Projects
+## Demo Credentials
 
-Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references. This means:
+- **HOD**: hod@college.edu / password123
+- **Staff 1**: staff1@college.edu / password123
+- **Staff 2**: staff2@college.edu / password123
+- **Student**: student1@college.edu / password123
+- **Student**: student2@college.edu / password123
+- **Class codes**: CS2A24 (2A), CS2B24 (2B)
 
-- **Always typecheck from the root** — run `pnpm run typecheck` (which runs `tsc --build --emitDeclarationOnly`). This builds the full dependency graph so that cross-package imports resolve correctly. Running `tsc` inside a single package will fail if its dependencies haven't been built yet.
-- **`emitDeclarationOnly`** — we only emit `.d.ts` files during typecheck; actual JS bundling is handled by esbuild/tsx/vite...etc, not `tsc`.
-- **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in its `references` array. `tsc --build` uses this to determine build order and skip up-to-date packages.
+## Features
 
-## Root Scripts
+### User Roles
+1. **Staff** — Manage subjects, view timetable, generate QR attendance codes, write class notes, mark unavailability
+2. **HOD** — Dashboard with analytics, manage classes & staff, allocate subjects, generate timetables, view burnout analysis, open feedback windows
+3. **Student** — View timetable & class info, scan QR for attendance, submit feedback, view notifications
 
-- `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
-- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
+### Key Features
+- JWT Authentication with role-based access control
+- Weekly timetable generation with constraint-based scheduling
+- QR code attendance (2-minute expiry, single-use tokens)
+- Staff burnout detection with risk scoring (0-100) and recommendations
+- NLP-based student feedback sentiment analysis
+- Real-time notifications system
+- HOD analytics dashboard with workload, burnout heatmap, and satisfaction charts
+- Staff availability/unavailability management with HOD alerts
+- Class notes management per classroom
 
-## Packages
+## Database Schema
 
-### `artifacts/api-server` (`@workspace/api-server`)
+Key tables: users, staff, students, subjects, classes, allocations, timetables, timetable_slots, attendance, qr_codes, notes, feedback, feedback_windows, notifications, availability, schedule_config
 
-Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
+## API Routes
 
-- Entry: `src/index.ts` — reads `PORT`, starts Express
-- App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Depends on: `@workspace/db`, `@workspace/api-zod`
-- `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
-
-### `lib/db` (`@workspace/db`)
-
-Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client instance and schema models.
-
-- `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
-- `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
-- `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
-
-Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
-
-### `lib/api-spec` (`@workspace/api-spec`)
-
-Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:
-
-1. `lib/api-client-react/src/generated/` — React Query hooks + fetch client
-2. `lib/api-zod/src/generated/` — Zod schemas
-
-Run codegen: `pnpm --filter @workspace/api-spec run codegen`
-
-### `lib/api-zod` (`@workspace/api-zod`)
-
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
-
-### `lib/api-client-react` (`@workspace/api-client-react`)
-
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
-
-### `scripts` (`@workspace/scripts`)
-
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+All routes under `/api`:
+- `/auth/*` — login, register, me
+- `/subjects/*` — CRUD for staff subjects
+- `/classes/*` — class management and allocations
+- `/timetable/*` — timetable generation and retrieval
+- `/qr/*` — QR generation and scanning
+- `/attendance/*` — attendance records
+- `/notes/*` — class notes
+- `/feedback/*` — feedback windows and submissions
+- `/notifications/*` — notifications
+- `/availability/*` — staff availability
+- `/burnout/*` — burnout analysis
+- `/analytics/*` — HOD analytics
+- `/hod/*` — HOD-specific (staff list, schedule config)
+- `/students/*` — student class joining

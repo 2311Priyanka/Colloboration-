@@ -1,22 +1,53 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Smart Classroom Management System API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: users
+    description: User management
+  - name: staff
+    description: Staff management
+  - name: hod
+    description: HOD operations
+  - name: students
+    description: Student management
+  - name: subjects
+    description: Subject management
+  - name: classes
+    description: Class management
+  - name: timetable
+    description: Timetable management
+  - name: attendance
+    description: Attendance tracking
+  - name: qr
+    description: QR code operations
+  - name: notes
+    description: Class notes
+  - name: feedback
+    description: Student feedback
+  - name: notifications
+    description: Notifications
+  - name: availability
+    description: Staff availability
+  - name: burnout
+    description: Staff burnout analysis
+  - name: analytics
+    description: Analytics dashboard
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,7 +55,807 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user profile
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /subjects:
+    get:
+      operationId: getSubjects
+      tags: [subjects]
+      summary: Get all subjects for current staff
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of subjects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Subject"
+    post:
+      operationId: createSubject
+      tags: [subjects]
+      summary: Create a new subject
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSubjectRequest"
+      responses:
+        "201":
+          description: Subject created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subject"
+
+  /subjects/{id}:
+    put:
+      operationId: updateSubject
+      tags: [subjects]
+      summary: Update a subject
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSubjectRequest"
+      responses:
+        "200":
+          description: Subject updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subject"
+    delete:
+      operationId: deleteSubject
+      tags: [subjects]
+      summary: Delete a subject
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Subject deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /classes:
+    get:
+      operationId: getClasses
+      tags: [classes]
+      summary: Get all classes
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of classes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ClassWithAllocations"
+    post:
+      operationId: createClass
+      tags: [classes]
+      summary: Create a new class (HOD only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClassRequest"
+      responses:
+        "201":
+          description: Class created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassWithAllocations"
+
+  /classes/{id}:
+    get:
+      operationId: getClass
+      tags: [classes]
+      summary: Get class details
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Class details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassWithAllocations"
+
+  /classes/{id}/allocations:
+    post:
+      operationId: createAllocation
+      tags: [classes]
+      summary: Allocate staff to a subject in a class (HOD only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAllocationRequest"
+      responses:
+        "201":
+          description: Allocation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Allocation"
+
+  /timetable/{classId}:
+    get:
+      operationId: getTimetable
+      tags: [timetable]
+      summary: Get timetable for a class
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: classId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Timetable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Timetable"
+
+  /timetable/{classId}/generate:
+    post:
+      operationId: generateTimetable
+      tags: [timetable]
+      summary: Generate timetable for a class (HOD only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: classId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateTimetableRequest"
+      responses:
+        "200":
+          description: Timetable generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Timetable"
+
+  /timetable/staff/me:
+    get:
+      operationId: getStaffTimetable
+      tags: [timetable]
+      summary: Get current staff's weekly timetable
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Staff timetable
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimetableSlot"
+
+  /qr/generate:
+    post:
+      operationId: generateQR
+      tags: [qr]
+      summary: Generate QR code for class attendance (Staff only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateQRRequest"
+      responses:
+        "200":
+          description: QR code generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QRCodeResponse"
+
+  /qr/scan:
+    post:
+      operationId: scanQR
+      tags: [qr]
+      summary: Scan QR code to mark attendance (Student only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScanQRRequest"
+      responses:
+        "200":
+          description: Attendance marked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendanceResponse"
+
+  /attendance/my:
+    get:
+      operationId: getMyAttendance
+      tags: [attendance]
+      summary: Get current student's attendance history
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Attendance history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Attendance"
+
+  /attendance/class/{classId}:
+    get:
+      operationId: getClassAttendance
+      tags: [attendance]
+      summary: Get attendance for a class (Staff/HOD only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: classId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Class attendance records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Attendance"
+
+  /notes/{classId}:
+    get:
+      operationId: getNotes
+      tags: [notes]
+      summary: Get notes for a class
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: classId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Notes list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Note"
+    post:
+      operationId: createNote
+      tags: [notes]
+      summary: Create a note for a class (Staff only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: classId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNoteRequest"
+      responses:
+        "201":
+          description: Note created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+
+  /notes/{classId}/{noteId}:
+    put:
+      operationId: updateNote
+      tags: [notes]
+      summary: Update a note (Staff only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: classId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: noteId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNoteRequest"
+      responses:
+        "200":
+          description: Note updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+    delete:
+      operationId: deleteNote
+      tags: [notes]
+      summary: Delete a note (Staff only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: classId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: noteId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Note deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /feedback/window:
+    post:
+      operationId: openFeedbackWindow
+      tags: [feedback]
+      summary: Open a feedback window for a class (HOD only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpenFeedbackWindowRequest"
+      responses:
+        "201":
+          description: Feedback window opened
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackWindow"
+
+  /feedback/windows:
+    get:
+      operationId: getFeedbackWindows
+      tags: [feedback]
+      summary: Get all feedback windows
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Feedback windows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FeedbackWindow"
+
+  /feedback/{windowId}/submit:
+    post:
+      operationId: submitFeedback
+      tags: [feedback]
+      summary: Submit feedback for a class (Student only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: windowId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitFeedbackRequest"
+      responses:
+        "201":
+          description: Feedback submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Feedback"
+
+  /feedback/{windowId}:
+    get:
+      operationId: getFeedbackResults
+      tags: [feedback]
+      summary: Get feedback results for a window (HOD/Staff only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: windowId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Feedback results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackResults"
+
+  /notifications:
+    get:
+      operationId: getNotifications
+      tags: [notifications]
+      summary: Get notifications for current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+  /notifications/{id}/read:
+    put:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark a notification as read
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /availability:
+    post:
+      operationId: markUnavailable
+      tags: [availability]
+      summary: Mark staff as unavailable
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarkUnavailableRequest"
+      responses:
+        "201":
+          description: Availability marked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Availability"
+    get:
+      operationId: getAvailability
+      tags: [availability]
+      summary: Get availability records
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Availability records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Availability"
+
+  /burnout/staff/{staffId}:
+    get:
+      operationId: getStaffBurnout
+      tags: [burnout]
+      summary: Get burnout score for a staff member
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: staffId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Burnout analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BurnoutAnalysis"
+
+  /burnout/all:
+    get:
+      operationId: getAllBurnout
+      tags: [burnout]
+      summary: Get burnout scores for all staff (HOD only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All staff burnout data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StaffBurnoutSummary"
+
+  /analytics/overview:
+    get:
+      operationId: getAnalyticsOverview
+      tags: [analytics]
+      summary: Get analytics overview (HOD only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Analytics overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsOverview"
+
+  /analytics/workload:
+    get:
+      operationId: getWorkloadAnalytics
+      tags: [analytics]
+      summary: Get staff workload analytics
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Workload data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StaffWorkload"
+
+  /hod/staff:
+    get:
+      operationId: getAllStaff
+      tags: [hod]
+      summary: Get all staff members (HOD only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All staff
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StaffProfile"
+
+  /hod/schedule-config:
+    get:
+      operationId: getScheduleConfig
+      tags: [hod]
+      summary: Get schedule configuration
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Schedule config
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduleConfig"
+    post:
+      operationId: saveScheduleConfig
+      tags: [hod]
+      summary: Save schedule configuration (HOD only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduleConfig"
+      responses:
+        "200":
+          description: Config saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduleConfig"
+
+  /students/join-class:
+    post:
+      operationId: studentJoinClass
+      tags: [students]
+      summary: Student join a class via QR or class code
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinClassRequest"
+      responses:
+        "200":
+          description: Joined class
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /students/my-class:
+    get:
+      operationId: getStudentClass
+      tags: [students]
+      summary: Get current student's class info
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Student class info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassWithAllocations"
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     HealthStatus:
       type: object
@@ -34,3 +865,859 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    RegisterRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [STAFF, HOD, STUDENT]
+        department:
+          type: string
+        phone:
+          type: string
+        designation:
+          type: string
+      required:
+        - email
+        - password
+        - name
+        - role
+        - department
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required:
+        - token
+        - user
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [STAFF, HOD, STUDENT]
+        department:
+          type: string
+        phone:
+          type: string
+        staffId:
+          type: string
+        studentId:
+          type: string
+      required:
+        - id
+        - email
+        - name
+        - role
+        - department
+
+    Subject:
+      type: object
+      properties:
+        id:
+          type: string
+        staffId:
+          type: string
+        name:
+          type: string
+        code:
+          type: string
+        type:
+          type: string
+          enum: [THEORY, LAB]
+        credits:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - staffId
+        - name
+        - code
+        - type
+        - credits
+
+    CreateSubjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        type:
+          type: string
+          enum: [THEORY, LAB]
+        credits:
+          type: integer
+      required:
+        - name
+        - code
+        - type
+        - credits
+
+    ClassWithAllocations:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        department:
+          type: string
+        semester:
+          type: integer
+        studentCount:
+          type: integer
+        allocations:
+          type: array
+          items:
+            $ref: "#/components/schemas/AllocationDetail"
+        studentEnrollment:
+          type: integer
+      required:
+        - id
+        - name
+        - department
+        - semester
+        - studentCount
+
+    CreateClassRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        department:
+          type: string
+        semester:
+          type: integer
+        studentCount:
+          type: integer
+      required:
+        - name
+        - department
+        - semester
+        - studentCount
+
+    Allocation:
+      type: object
+      properties:
+        id:
+          type: string
+        classId:
+          type: string
+        staffId:
+          type: string
+        subjectId:
+          type: string
+        type:
+          type: string
+          enum: [THEORY, LAB]
+      required:
+        - id
+        - classId
+        - staffId
+        - subjectId
+        - type
+
+    AllocationDetail:
+      type: object
+      properties:
+        id:
+          type: string
+        classId:
+          type: string
+        staffId:
+          type: string
+        staffName:
+          type: string
+        subjectId:
+          type: string
+        subjectName:
+          type: string
+        subjectCode:
+          type: string
+        type:
+          type: string
+          enum: [THEORY, LAB]
+      required:
+        - id
+        - classId
+        - staffId
+        - staffName
+        - subjectId
+        - subjectName
+        - subjectCode
+        - type
+
+    CreateAllocationRequest:
+      type: object
+      properties:
+        staffId:
+          type: string
+        subjectId:
+          type: string
+        type:
+          type: string
+          enum: [THEORY, LAB]
+      required:
+        - staffId
+        - subjectId
+        - type
+
+    TimetableSlot:
+      type: object
+      properties:
+        id:
+          type: string
+        day:
+          type: string
+          enum: [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY]
+        startTime:
+          type: string
+        endTime:
+          type: string
+        subjectId:
+          type: string
+        subjectName:
+          type: string
+        subjectCode:
+          type: string
+        subjectType:
+          type: string
+          enum: [THEORY, LAB]
+        room:
+          type: string
+        staffId:
+          type: string
+        staffName:
+          type: string
+        classId:
+          type: string
+        className:
+          type: string
+      required:
+        - id
+        - day
+        - startTime
+        - endTime
+        - subjectName
+        - subjectCode
+        - room
+        - staffName
+        - classId
+        - className
+
+    Timetable:
+      type: object
+      properties:
+        id:
+          type: string
+        classId:
+          type: string
+        className:
+          type: string
+        version:
+          type: integer
+        slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimetableSlot"
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - classId
+        - className
+        - version
+        - slots
+
+    GenerateTimetableRequest:
+      type: object
+      properties:
+        labStartTime:
+          type: string
+          description: Lab start time (HH:MM format)
+        labEndTime:
+          type: string
+          description: Lab end time (HH:MM format)
+        teaBreakStart:
+          type: string
+        teaBreakEnd:
+          type: string
+        lunchBreakStart:
+          type: string
+        lunchBreakEnd:
+          type: string
+        maxContinuousHours:
+          type: integer
+          default: 2
+      required:
+        - labStartTime
+        - labEndTime
+
+    GenerateQRRequest:
+      type: object
+      properties:
+        classId:
+          type: string
+        slotId:
+          type: string
+        expiresInSeconds:
+          type: integer
+          default: 120
+      required:
+        - classId
+        - slotId
+
+    QRCodeResponse:
+      type: object
+      properties:
+        qrToken:
+          type: string
+        qrData:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        classId:
+          type: string
+        slotId:
+          type: string
+      required:
+        - qrToken
+        - qrData
+        - expiresAt
+        - classId
+        - slotId
+
+    ScanQRRequest:
+      type: object
+      properties:
+        qrToken:
+          type: string
+      required:
+        - qrToken
+
+    AttendanceResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        className:
+          type: string
+        subject:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - success
+        - message
+
+    Attendance:
+      type: object
+      properties:
+        id:
+          type: string
+        studentId:
+          type: string
+        studentName:
+          type: string
+        classId:
+          type: string
+        className:
+          type: string
+        subjectName:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - id
+        - studentId
+        - classId
+        - className
+        - timestamp
+
+    Note:
+      type: object
+      properties:
+        id:
+          type: string
+        classId:
+          type: string
+        staffId:
+          type: string
+        staffName:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - classId
+        - staffId
+        - staffName
+        - content
+        - createdAt
+
+    CreateNoteRequest:
+      type: object
+      properties:
+        content:
+          type: string
+      required:
+        - content
+
+    FeedbackWindow:
+      type: object
+      properties:
+        id:
+          type: string
+        classId:
+          type: string
+        className:
+          type: string
+        staffId:
+          type: string
+        staffName:
+          type: string
+        opensAt:
+          type: string
+          format: date-time
+        closesAt:
+          type: string
+          format: date-time
+        isActive:
+          type: boolean
+        feedbackCount:
+          type: integer
+      required:
+        - id
+        - classId
+        - staffId
+        - opensAt
+        - closesAt
+        - isActive
+
+    OpenFeedbackWindowRequest:
+      type: object
+      properties:
+        classId:
+          type: string
+        staffId:
+          type: string
+        durationHours:
+          type: integer
+          default: 48
+      required:
+        - classId
+        - staffId
+
+    SubmitFeedbackRequest:
+      type: object
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+      required:
+        - rating
+        - comment
+
+    Feedback:
+      type: object
+      properties:
+        id:
+          type: string
+        studentId:
+          type: string
+        classId:
+          type: string
+        staffId:
+          type: string
+        rating:
+          type: integer
+        comment:
+          type: string
+        sentiment:
+          type: number
+        sentimentLabel:
+          type: string
+          enum: [positive, neutral, negative]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - classId
+        - staffId
+        - rating
+        - comment
+
+    FeedbackResults:
+      type: object
+      properties:
+        windowId:
+          type: string
+        totalFeedback:
+          type: integer
+        averageRating:
+          type: number
+        sentimentBreakdown:
+          type: object
+          properties:
+            positive:
+              type: integer
+            neutral:
+              type: integer
+            negative:
+              type: integer
+          required:
+            - positive
+            - neutral
+            - negative
+        averageSentiment:
+          type: number
+        feedbacks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Feedback"
+        ratingDistribution:
+          type: array
+          items:
+            type: object
+            properties:
+              rating:
+                type: integer
+              count:
+                type: integer
+            required:
+              - rating
+              - count
+      required:
+        - windowId
+        - totalFeedback
+        - averageRating
+        - sentimentBreakdown
+        - feedbacks
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        message:
+          type: string
+        type:
+          type: string
+          enum: [TIMETABLE_SWAP, ABSENCE_ALERT, FEEDBACK_REQUEST, GENERAL]
+        read:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - message
+        - type
+        - read
+        - createdAt
+
+    MarkUnavailableRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        reason:
+          type: string
+          enum: [sick, leave, emergency, other]
+        notes:
+          type: string
+      required:
+        - date
+        - reason
+
+    Availability:
+      type: object
+      properties:
+        id:
+          type: string
+        staffId:
+          type: string
+        staffName:
+          type: string
+        date:
+          type: string
+          format: date-time
+        isAvailable:
+          type: boolean
+        reason:
+          type: string
+      required:
+        - id
+        - staffId
+        - date
+        - isAvailable
+
+    BurnoutAnalysis:
+      type: object
+      properties:
+        staffId:
+          type: string
+        staffName:
+          type: string
+        burnoutScore:
+          type: number
+        riskLevel:
+          type: string
+          enum: [low, medium, high]
+        weeklyHours:
+          type: number
+        consecutiveDays:
+          type: integer
+        substituteCount:
+          type: integer
+        averageSentiment:
+          type: number
+        recommendations:
+          type: array
+          items:
+            type: string
+        breakdown:
+          type: object
+          properties:
+            weeklyHoursScore:
+              type: number
+            consecutiveDaysScore:
+              type: number
+            substituteFrequencyScore:
+              type: number
+            sentimentScore:
+              type: number
+          required:
+            - weeklyHoursScore
+            - consecutiveDaysScore
+            - substituteFrequencyScore
+            - sentimentScore
+      required:
+        - staffId
+        - staffName
+        - burnoutScore
+        - riskLevel
+        - weeklyHours
+        - consecutiveDays
+        - substituteCount
+
+    StaffBurnoutSummary:
+      type: object
+      properties:
+        staffId:
+          type: string
+        staffName:
+          type: string
+        department:
+          type: string
+        burnoutScore:
+          type: number
+        riskLevel:
+          type: string
+          enum: [low, medium, high]
+        weeklyHours:
+          type: number
+      required:
+        - staffId
+        - staffName
+        - department
+        - burnoutScore
+        - riskLevel
+        - weeklyHours
+
+    AnalyticsOverview:
+      type: object
+      properties:
+        totalStaff:
+          type: integer
+        totalClasses:
+          type: integer
+        totalStudents:
+          type: integer
+        totalSubjects:
+          type: integer
+        averageBurnoutScore:
+          type: number
+        highRiskStaff:
+          type: integer
+        attendanceRate:
+          type: number
+        averageSatisfaction:
+          type: number
+      required:
+        - totalStaff
+        - totalClasses
+        - totalStudents
+        - totalSubjects
+        - averageBurnoutScore
+        - highRiskStaff
+        - attendanceRate
+        - averageSatisfaction
+
+    StaffWorkload:
+      type: object
+      properties:
+        staffId:
+          type: string
+        staffName:
+          type: string
+        department:
+          type: string
+        weeklyHours:
+          type: number
+        classesCount:
+          type: integer
+        subjectsCount:
+          type: integer
+      required:
+        - staffId
+        - staffName
+        - department
+        - weeklyHours
+        - classesCount
+        - subjectsCount
+
+    StaffProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        department:
+          type: string
+        designation:
+          type: string
+        phone:
+          type: string
+        subjects:
+          type: array
+          items:
+            $ref: "#/components/schemas/Subject"
+        burnoutScore:
+          type: number
+        weeklyHours:
+          type: number
+      required:
+        - id
+        - userId
+        - name
+        - email
+        - department
+
+    ScheduleConfig:
+      type: object
+      properties:
+        id:
+          type: string
+        department:
+          type: string
+        labStartTime:
+          type: string
+        labEndTime:
+          type: string
+        teaBreakStart:
+          type: string
+        teaBreakEnd:
+          type: string
+        lunchBreakStart:
+          type: string
+        lunchBreakEnd:
+          type: string
+        maxContinuousHours:
+          type: integer
+        maxWeeklyHours:
+          type: integer
+      required:
+        - labStartTime
+        - labEndTime
+        - teaBreakStart
+        - teaBreakEnd
+        - lunchBreakStart
+        - lunchBreakEnd
+        - maxContinuousHours
+
+    JoinClassRequest:
+      type: object
+      properties:
+        classCode:
+          type: string
+      required:
+        - classCode
